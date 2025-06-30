@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,7 +22,7 @@ import { toast } from 'sonner';
 import FileDropZone from './FileDropZone';
 import AudioPlayerCard from './AudioPlayerCard';
 import AITranscriptionService from '@/services/AITranscriptionService';
-import { AudioFile, UploadProgress } from '@/types/audio';
+import { AudioFile } from '@/types/audio';
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 const SUPPORTED_AUDIO_FORMATS = ['.mp3', '.wav', '.m4a', '.ogg'];
@@ -31,7 +30,6 @@ const SUPPORTED_TRANSCRIPT_FORMATS = ['.srt', '.vtt'];
 
 const MultiAudioManager: React.FC = () => {
   const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
-  const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isUploading, setIsUploading] = useState(false);
   const [showUploadSection, setShowUploadSection] = useState(true);
@@ -142,27 +140,7 @@ const MultiAudioManager: React.FC = () => {
     for (const file of audioFiles) {
       const fileId = `${Date.now()}-${Math.random()}`;
       
-      // Add to upload progress
-      setUploadProgress(prev => [...prev, {
-        id: fileId,
-        fileName: file.name,
-        progress: 0,
-        status: 'uploading'
-      }]);
-
       try {
-        // Simulate upload progress
-        for (let progress = 0; progress <= 100; progress += 10) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-          setUploadProgress(prev => 
-            prev.map(item => 
-              item.id === fileId 
-                ? { ...item, progress }
-                : item
-            )
-          );
-        }
-
         // Create audio URL
         const audioUrl = URL.createObjectURL(file);
         
@@ -188,24 +166,9 @@ const MultiAudioManager: React.FC = () => {
 
         newAudioFiles.push(newAudioFile);
         
-        setUploadProgress(prev => 
-          prev.map(item => 
-            item.id === fileId 
-              ? { ...item, status: 'completed' }
-              : item
-          )
-        );
-
         toast.success(`Audio file "${file.name}" uploaded successfully`);
 
       } catch (error) {
-        setUploadProgress(prev => 
-          prev.map(item => 
-            item.id === fileId 
-              ? { ...item, status: 'error' }
-              : item
-          )
-        );
         toast.error(`Failed to upload "${file.name}"`);
       }
     }
@@ -255,11 +218,7 @@ const MultiAudioManager: React.FC = () => {
       }
     }
 
-    // Clear upload progress after a delay
-    setTimeout(() => {
-      setUploadProgress([]);
-      setIsUploading(false);
-    }, 2000);
+    setIsUploading(false);
 
   }, []);
 
@@ -495,35 +454,6 @@ const MultiAudioManager: React.FC = () => {
                 )}
               </AlertDescription>
             </Alert>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Upload Progress */}
-      {uploadProgress.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Upload Progress</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {uploadProgress.map((item) => (
-              <div key={item.id} className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="truncate">{item.fileName}</span>
-                  <span className="text-muted-foreground">
-                    {item.status === 'completed' ? 'Completed' : 
-                     item.status === 'error' ? 'Error' : 
-                     `${item.progress}%`}
-                  </span>
-                </div>
-                <Progress 
-                  value={item.progress} 
-                  className={`h-2 ${
-                    item.status === 'error' ? 'bg-destructive/20' : ''
-                  }`}
-                />
-              </div>
-            ))}
           </CardContent>
         </Card>
       )}

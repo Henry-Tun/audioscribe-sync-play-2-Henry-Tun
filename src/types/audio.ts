@@ -10,13 +10,6 @@ export interface AudioFile {
   hasTranscript: boolean;
 }
 
-export interface UploadProgress {
-  id: string;
-  fileName: string;
-  progress: number;
-  status: 'uploading' | 'completed' | 'error';
-}
-
 export interface TranscriptSegment {
   id: number;
   startTime: number;
